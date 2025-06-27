@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import * as tf from "@tensorflow/tfjs";
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 
@@ -20,6 +20,7 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
   const detectorRef =
     useRef<faceLandmarksDetection.FaceLandmarksDetector | null>(null);
   const animationRef = useRef<number>(0);
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
 
   // Initialize TensorFlow.js and load the model
   useEffect(() => {
@@ -40,11 +41,7 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
           detectorConfig
         );
         console.log("Face detection model loaded successfully");
-        
-        // Test if model is working
-        setTimeout(() => {
-          console.log("Model ready for face detection");
-        }, 2000);
+        setIsModelLoaded(true);
       } catch (error) {
         console.error("Error loading face detection model:", error);
       }
@@ -121,8 +118,8 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
   };
 
   // Main detection loop
-  const detectEyes = async () => {
-    if (!videoRef.current || !canvasRef.current || !detectorRef.current || !isTracking) {
+  const detectEyes = useCallback(async () => {
+    if (!videoRef.current || !canvasRef.current || !detectorRef.current || !isTracking || !isModelLoaded) {
       return;
     }
 
@@ -219,11 +216,12 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
     if (isTracking) {
       animationRef.current = requestAnimationFrame(detectEyes);
     }
-  };
+  }, [isTracking, onEyeStateChange, showCrosshair, isModelLoaded]);
 
   // Start/stop detection when tracking state changes
   useEffect(() => {
-    if (isTracking && detectorRef.current) {
+    if (isTracking && detectorRef.current && isModelLoaded) {
+      console.log('Starting eye detection...');
       detectEyes();
     } else if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
@@ -241,7 +239,7 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isTracking, detectEyes]);
+  }, [isTracking, detectEyes, isModelLoaded]);
 
   return null; // This component doesn't render anything
 };

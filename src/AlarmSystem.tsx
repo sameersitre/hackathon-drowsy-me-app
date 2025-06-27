@@ -73,6 +73,8 @@ const AlarmSystem: React.FC<AlarmSystemProps> = ({ eyesOpen, isTracking, beepDel
 
   // Handle eye state changes
   useEffect(() => {
+    console.log(`AlarmSystem: eyesOpen=${eyesOpen}, isTracking=${isTracking}, beepDelay=${beepDelay}`);
+    
     if (!isTracking) {
       stopBeep();
       if (delayTimerRef.current) {
@@ -85,6 +87,7 @@ const AlarmSystem: React.FC<AlarmSystemProps> = ({ eyesOpen, isTracking, beepDel
     if (!eyesOpen) {
       // Eyes closed - start alarm after delay
       if (!delayTimerRef.current) {
+        console.log(`Eyes closed - setting alarm timer for ${beepDelay}ms`);
         delayTimerRef.current = setTimeout(() => {
           startBeep();
           delayTimerRef.current = null;
@@ -93,6 +96,7 @@ const AlarmSystem: React.FC<AlarmSystemProps> = ({ eyesOpen, isTracking, beepDel
     } else {
       // Eyes open - clear delay timer and stop alarm
       if (delayTimerRef.current) {
+        console.log('Eyes opened - clearing alarm timer');
         clearTimeout(delayTimerRef.current);
         delayTimerRef.current = null;
       }

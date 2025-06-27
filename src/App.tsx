@@ -39,10 +39,11 @@ function App() {
   const toggleTracking = async () => {
     if (!isTracking) {
       await startCamera();
-      // Small delay to ensure camera is fully ready
+      // Smaller delay to ensure camera is ready but not too long
       setTimeout(() => {
+        console.log('Starting tracking with beepDelay:', beepDelay);
         setIsTracking(true);
-      }, 1000);
+      }, 100);
     } else {
       setIsTracking(false);
     }
@@ -50,6 +51,7 @@ function App() {
 
   // Handle eye state changes from EyeTracker
   const handleEyeStateChange = (isOpen: boolean) => {
+    console.log(`App: Eye state changed - isOpen=${isOpen}, beepDelay=${beepDelay}`);
     setEyesOpen(isOpen);
   };
 
