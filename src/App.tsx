@@ -10,7 +10,7 @@ function App() {
   const [eyesOpen, setEyesOpen] = useState(true);
   const [cameraError, setCameraError] = useState<string>('');
   const [showSettings, setShowSettings] = useState(false);
-  const [beepDelay, setBeepDelay] = useState(1000); // milliseconds
+  const [beepDelay, setBeepDelay] = useState(300); // milliseconds
   const [showCrosshair, setShowCrosshair] = useState(true);
 
   // Initialize camera
