@@ -3,7 +3,7 @@
 
 ### 1. Executive Summary
 
-**Product Name:** EyeGuard - Real-time Drowsiness Detection System
+**Product Name:** Real-time Drowsiness Detection System
 
 **Product Vision:** A web-based application that monitors user alertness through real-time eye tracking, providing immediate audio alerts when drowsiness is detected to prevent accidents and maintain focus.
 

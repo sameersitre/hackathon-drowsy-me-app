@@ -1,4 +1,4 @@
-# EyeGuard - Eye Tracking Drowsiness Detection App
+# Eye Tracking Drowsiness Detection App
 
 A simple React web application that monitors your eyes in real-time and plays an alarm when you close your eyes to prevent drowsiness.
 
@@ -59,4 +59,4 @@ A simple React web application that monitors your eyes in real-time and plays an
 - **Eye detection not accurate**: Try adjusting lighting or camera position
 - **Performance issues**: Close other browser tabs to free up resources
 
-Enjoy staying alert with EyeGuard! 👁️
+Enjoy staying alert with Drowsy Detector! 👁️

@@ -89,7 +89,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>EyeGuard - Drowsiness Detection</h1>
+        <h1>Drowsiness Detection</h1>
         <button 
           className="settings-btn"
           onClick={() => setShowSettings(true)}
