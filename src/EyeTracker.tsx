@@ -8,6 +8,7 @@ interface EyeTrackerProps {
   isTracking: boolean;
   onEyeStateChange: (isOpen: boolean) => void;
   showCrosshair: boolean;
+  onLoadingStageChange?: (stage: string | null, progress?: number) => void;
 }
 
 const EyeTracker: React.FC<EyeTrackerProps> = ({
@@ -16,6 +17,7 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
   isTracking,
   onEyeStateChange,
   showCrosshair,
+  onLoadingStageChange,
 }) => {
   const detectorRef =
     useRef<faceLandmarksDetection.FaceLandmarksDetector | null>(null);
@@ -26,8 +28,13 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
   useEffect(() => {
     const loadModel = async () => {
       try {
-        // Initialize TensorFlow.js
+        // Stage 1: Initialize TensorFlow.js
+        onLoadingStageChange?.("Initializing TensorFlow.js...", 0);
         await tf.ready();
+        console.log("TensorFlow.js backend ready");
+        
+        // Stage 2: Loading model files
+        onLoadingStageChange?.("Loading face detection model...", 25);
         
         // Load the MediaPipe FaceMesh model
         const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
@@ -36,14 +43,69 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
           refineLandmarks: true,
         };
         
+        // Stage 3: Creating detector
+        onLoadingStageChange?.("Creating face detector...", 50);
+        
         detectorRef.current = await faceLandmarksDetection.createDetector(
           model,
           detectorConfig
         );
-        console.log("Face detection model loaded successfully");
-        setIsModelLoaded(true);
+        
+        // Stage 4: Warming up model
+        onLoadingStageChange?.("Warming up model...", 75);
+        
+        // Create a dummy canvas to warm up the model
+        const dummyCanvas = document.createElement('canvas');
+        dummyCanvas.width = 640;
+        dummyCanvas.height = 480;
+        const dummyCtx = dummyCanvas.getContext('2d');
+        if (dummyCtx) {
+          dummyCtx.fillStyle = 'black';
+          dummyCtx.fillRect(0, 0, 640, 480);
+          try {
+            await detectorRef.current.estimateFaces(dummyCanvas);
+          } catch {
+            console.log("Model warmup completed with expected error");
+          }
+        }
+        
+        // Stage 5: Complete
+        onLoadingStageChange?.("Model ready!", 100);
+        
+        setTimeout(() => {
+          console.log("Face detection model loaded successfully");
+          setIsModelLoaded(true);
+          onLoadingStageChange?.(null, 100);
+        }, 500);
+        
       } catch (error) {
         console.error("Error loading face detection model:", error);
+        onLoadingStageChange?.(null, 0);
+        
+        // Try a simpler fallback
+        try {
+          onLoadingStageChange?.("Trying fallback configuration...", 25);
+          const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+          const fallbackConfig = {
+            runtime: "tfjs" as const,
+            refineLandmarks: false,
+          };
+          
+          detectorRef.current = await faceLandmarksDetection.createDetector(
+            model,
+            fallbackConfig
+          );
+          
+          onLoadingStageChange?.("Fallback model ready!", 100);
+          setTimeout(() => {
+            setIsModelLoaded(true);
+            onLoadingStageChange?.(null, 100);
+          }, 500);
+          
+        } catch (fallbackError) {
+          console.error("Fallback model loading failed:", fallbackError);
+          onLoadingStageChange?.(null, 0);
+        }
       }
     };
 

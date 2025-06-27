@@ -111,6 +111,10 @@
   background-color: #c0392b;
 }
 
+.control-btn.loading:hover {
+  background-color: #95a5a6;
+}
+
 .status {
   display: flex;
   justify-content: center;
@@ -264,4 +268,135 @@
   align-items: center;
   cursor: pointer;
   margin-bottom: 0;
+}
+
+/* Loading Popup */
+.loading-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1500;
+  backdrop-filter: blur(3px);
+}
+
+.loading-popup {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  min-width: 400px;
+  max-width: 500px;
+  width: 90%;
+  color: white;
+  overflow: hidden;
+  animation: popupSlideIn 0.3s ease-out;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.loading-header {
+  padding: 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.loading-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.loading-content {
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-spinner-large {
+  width: 60px;
+  height: 60px;
+  border: 6px solid rgba(255, 255, 255, 0.2);
+  border-top: 6px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+  margin: 0 auto 1.5rem auto;
+}
+
+.loading-stage-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  min-height: 1.5rem;
+}
+
+.loading-progress-container {
+  margin-bottom: 1.5rem;
+}
+
+.loading-progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.loading-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #00d4ff);
+  border-radius: 4px;
+  transition: width 0.3s ease-in-out;
+  animation: progressGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes progressGlow {
+  from {
+    box-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+  }
+}
+
+.loading-percentage {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.loading-details {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  line-height: 1.4;
+  min-height: 1.4rem;
+}
+
+.loading-details p {
+  margin: 0;
+  animation: fadeInText 0.5s ease-in-out;
+}
+
+@keyframes fadeInText {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 0.8;
+    transform: translateY(0);
+  }
 }
