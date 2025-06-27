@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import AlarmSystem from './AlarmSystem';
 import './App.css';
 import EyeTracker from './EyeTracker';
-import AlarmSystem from './AlarmSystem';
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
