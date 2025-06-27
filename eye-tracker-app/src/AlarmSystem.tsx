@@ -3,13 +3,15 @@ import React, { useRef, useEffect } from 'react';
 interface AlarmSystemProps {
   eyesOpen: boolean;
   isTracking: boolean;
+  beepDelay: number; // milliseconds before alarm starts
 }
 
-const AlarmSystem: React.FC<AlarmSystemProps> = ({ eyesOpen, isTracking }) => {
+const AlarmSystem: React.FC<AlarmSystemProps> = ({ eyesOpen, isTracking, beepDelay }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const isPlayingRef = useRef(false);
+  const delayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize audio context
   useEffect(() => {
@@ -73,17 +75,30 @@ const AlarmSystem: React.FC<AlarmSystemProps> = ({ eyesOpen, isTracking }) => {
   useEffect(() => {
     if (!isTracking) {
       stopBeep();
+      if (delayTimerRef.current) {
+        clearTimeout(delayTimerRef.current);
+        delayTimerRef.current = null;
+      }
       return;
     }
 
     if (!eyesOpen) {
-      // Eyes closed - start alarm
-      startBeep();
+      // Eyes closed - start alarm after delay
+      if (!delayTimerRef.current) {
+        delayTimerRef.current = setTimeout(() => {
+          startBeep();
+          delayTimerRef.current = null;
+        }, beepDelay);
+      }
     } else {
-      // Eyes open - stop alarm
+      // Eyes open - clear delay timer and stop alarm
+      if (delayTimerRef.current) {
+        clearTimeout(delayTimerRef.current);
+        delayTimerRef.current = null;
+      }
       stopBeep();
     }
-  }, [eyesOpen, isTracking]);
+  }, [eyesOpen, isTracking, beepDelay]);
 
   return null; // This component doesn't render anything
 };

@@ -9,6 +9,9 @@ function App() {
   const [isTracking, setIsTracking] = useState(false);
   const [eyesOpen, setEyesOpen] = useState(true);
   const [cameraError, setCameraError] = useState<string>('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [beepDelay, setBeepDelay] = useState(1000); // milliseconds
+  const [showCrosshair, setShowCrosshair] = useState(true);
 
   // Initialize camera
   const startCamera = async () => {
@@ -54,6 +57,13 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>EyeGuard - Drowsiness Detection</h1>
+        <button 
+          className="settings-btn"
+          onClick={() => setShowSettings(true)}
+          title="Settings"
+        >
+          ⚙️
+        </button>
       </header>
       
       <main className="app-main">
@@ -98,14 +108,67 @@ function App() {
           canvasRef={canvasRef}
           isTracking={isTracking}
           onEyeStateChange={handleEyeStateChange}
+          showCrosshair={showCrosshair}
         />
 
         {/* Alarm system */}
         <AlarmSystem
           eyesOpen={eyesOpen}
           isTracking={isTracking}
+          beepDelay={beepDelay}
         />
       </main>
+
+      {/* Settings Popup */}
+      {showSettings && (
+        <div className="settings-overlay" onClick={() => setShowSettings(false)}>
+          <div className="settings-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-header">
+              <h3>Settings</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowSettings(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="settings-content">
+              <div className="setting-item">
+                <label htmlFor="beepDelay">
+                  Beep delay: {beepDelay}ms
+                </label>
+                <input
+                  id="beepDelay"
+                  type="range"
+                  min="250"
+                  max="3000"
+                  step="250"
+                  value={beepDelay}
+                  onChange={(e) => setBeepDelay(Number(e.target.value))}
+                  className="delay-slider"
+                />
+                <div className="slider-labels">
+                  <span>250ms</span>
+                  <span>3s</span>
+                </div>
+              </div>
+              
+              <div className="setting-item">
+                <label htmlFor="showCrosshair">
+                  <input
+                    id="showCrosshair"
+                    type="checkbox"
+                    checked={showCrosshair}
+                    onChange={(e) => setShowCrosshair(e.target.checked)}
+                  />
+                  Show crosshairs
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

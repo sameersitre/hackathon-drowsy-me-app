@@ -73,7 +73,7 @@ Drowsiness and fatigue are major causes of accidents, reduced productivity, and 
 **User Interface:**
 - ✅ FR-014: Clean, intuitive React-based interface
 - ✅ FR-015: Real-time eye state indicators (with crosshairs!)
-- FR-016: Settings panel for sensitivity adjustment
+- ✅ FR-016: Settings panel for sensitivity adjustment (delay + crosshair toggle)
 - FR-017: Calibration wizard for initial setup
 - ✅ FR-018: Start/stop monitoring controls
 

@@ -7,6 +7,7 @@ interface EyeTrackerProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   isTracking: boolean;
   onEyeStateChange: (isOpen: boolean) => void;
+  showCrosshair: boolean;
 }
 
 const EyeTracker: React.FC<EyeTrackerProps> = ({
@@ -14,6 +15,7 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
   canvasRef,
   isTracking,
   onEyeStateChange,
+  showCrosshair,
 }) => {
   const detectorRef =
     useRef<faceLandmarksDetection.FaceLandmarksDetector | null>(null);
@@ -197,9 +199,11 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
         const leftEyeCenter = calculateEyeCenter(leftEyeLandmarks);
         const rightEyeCenter = calculateEyeCenter(rightEyeLandmarks);
         
-        // Draw crosshairs on both eyes
-        drawCrosshair(ctx, leftEyeCenter.x, leftEyeCenter.y, eyesOpen);
-        drawCrosshair(ctx, rightEyeCenter.x, rightEyeCenter.y, eyesOpen);
+        // Draw crosshairs on both eyes (if enabled)
+        if (showCrosshair) {
+          drawCrosshair(ctx, leftEyeCenter.x, leftEyeCenter.y, eyesOpen);
+          drawCrosshair(ctx, rightEyeCenter.x, rightEyeCenter.y, eyesOpen);
+        }
         
         onEyeStateChange(eyesOpen);
       } else {
