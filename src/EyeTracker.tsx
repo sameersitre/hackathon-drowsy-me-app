@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import * as tf from "@tensorflow/tfjs";
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 
@@ -7,6 +7,8 @@ interface EyeTrackerProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   isTracking: boolean;
   onEyeStateChange: (isOpen: boolean) => void;
+  showCrosshair: boolean;
+  onLoadingStageChange?: (stage: string | null, progress?: number) => void;
 }
 
 const EyeTracker: React.FC<EyeTrackerProps> = ({
@@ -14,17 +16,25 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
   canvasRef,
   isTracking,
   onEyeStateChange,
+  showCrosshair,
+  onLoadingStageChange,
 }) => {
   const detectorRef =
     useRef<faceLandmarksDetection.FaceLandmarksDetector | null>(null);
   const animationRef = useRef<number>(0);
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
 
   // Initialize TensorFlow.js and load the model
   useEffect(() => {
     const loadModel = async () => {
       try {
-        // Initialize TensorFlow.js
+        // Stage 1: Initialize TensorFlow.js
+        onLoadingStageChange?.("Initializing TensorFlow.js...", 0);
         await tf.ready();
+        console.log("TensorFlow.js backend ready");
+        
+        // Stage 2: Loading model files
+        onLoadingStageChange?.("Loading face detection model...", 25);
         
         // Load the MediaPipe FaceMesh model
         const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
@@ -33,18 +43,69 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
           refineLandmarks: true,
         };
         
+        // Stage 3: Creating detector
+        onLoadingStageChange?.("Creating face detector...", 50);
+        
         detectorRef.current = await faceLandmarksDetection.createDetector(
           model,
           detectorConfig
         );
-        console.log("Face detection model loaded successfully");
         
-        // Test if model is working
+        // Stage 4: Warming up model
+        onLoadingStageChange?.("Warming up model...", 75);
+        
+        // Create a dummy canvas to warm up the model
+        const dummyCanvas = document.createElement('canvas');
+        dummyCanvas.width = 640;
+        dummyCanvas.height = 480;
+        const dummyCtx = dummyCanvas.getContext('2d');
+        if (dummyCtx) {
+          dummyCtx.fillStyle = 'black';
+          dummyCtx.fillRect(0, 0, 640, 480);
+          try {
+            await detectorRef.current.estimateFaces(dummyCanvas);
+          } catch {
+            console.log("Model warmup completed with expected error");
+          }
+        }
+        
+        // Stage 5: Complete
+        onLoadingStageChange?.("Model ready!", 100);
+        
         setTimeout(() => {
-          console.log("Model ready for face detection");
-        }, 2000);
+          console.log("Face detection model loaded successfully");
+          setIsModelLoaded(true);
+          onLoadingStageChange?.(null, 100);
+        }, 500);
+        
       } catch (error) {
         console.error("Error loading face detection model:", error);
+        onLoadingStageChange?.(null, 0);
+        
+        // Try a simpler fallback
+        try {
+          onLoadingStageChange?.("Trying fallback configuration...", 25);
+          const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+          const fallbackConfig = {
+            runtime: "tfjs" as const,
+            refineLandmarks: false,
+          };
+          
+          detectorRef.current = await faceLandmarksDetection.createDetector(
+            model,
+            fallbackConfig
+          );
+          
+          onLoadingStageChange?.("Fallback model ready!", 100);
+          setTimeout(() => {
+            setIsModelLoaded(true);
+            onLoadingStageChange?.(null, 100);
+          }, 500);
+          
+        } catch (fallbackError) {
+          console.error("Fallback model loading failed:", fallbackError);
+          onLoadingStageChange?.(null, 0);
+        }
       }
     };
 
@@ -88,13 +149,15 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
 
   // Draw crosshair on canvas
   const drawCrosshair = (ctx: CanvasRenderingContext2D, x: number, y: number, isOpen: boolean) => {
-    const size = 20;
+    const size = 30; // Increased size for better visibility
     const color = isOpen ? '#00ff00' : '#ff0000'; // Green for open, red for closed
     
-    // Set line style
+    // Set line style with increased visibility
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 4; // Thicker lines
     ctx.lineCap = 'round';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10; // Add glow effect
     
     // Draw crosshair lines
     ctx.beginPath();
@@ -106,11 +169,21 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
     ctx.lineTo(x, y + size);
     ctx.stroke();
     
-    // Draw center circle
+    // Draw center circle with increased size
     ctx.beginPath();
-    ctx.arc(x, y, 3, 0, 2 * Math.PI);
+    ctx.arc(x, y, 8, 0, 2 * Math.PI); // Larger circle
     ctx.fillStyle = color;
     ctx.fill();
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+    
+    // Draw outer ring for better visibility
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.arc(x, y, 15, 0, 2 * Math.PI);
+    ctx.stroke();
   };
 
   // Clear canvas
@@ -119,8 +192,8 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
   };
 
   // Main detection loop
-  const detectEyes = async () => {
-    if (!videoRef.current || !canvasRef.current || !detectorRef.current || !isTracking) {
+  const detectEyes = useCallback(async () => {
+    if (!videoRef.current || !canvasRef.current || !detectorRef.current || !isTracking || !isModelLoaded) {
       return;
     }
 
@@ -137,6 +210,11 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
       // Set canvas size to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+      
+      // Set canvas display size to match video display size
+      const videoRect = video.getBoundingClientRect();
+      canvas.style.width = `${videoRect.width}px`;
+      canvas.style.height = `${videoRect.height}px`;
 
       // Clear previous drawings
       clearCanvas(ctx, canvas.width, canvas.height);
@@ -197,9 +275,12 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
         const leftEyeCenter = calculateEyeCenter(leftEyeLandmarks);
         const rightEyeCenter = calculateEyeCenter(rightEyeLandmarks);
         
-        // Draw crosshairs on both eyes
-        drawCrosshair(ctx, leftEyeCenter.x, leftEyeCenter.y, eyesOpen);
-        drawCrosshair(ctx, rightEyeCenter.x, rightEyeCenter.y, eyesOpen);
+        // Draw crosshairs on both eyes (if enabled)
+        if (showCrosshair) {
+          // Apply scaling to match display coordinates - no scaling needed since canvas matches video size
+          drawCrosshair(ctx, leftEyeCenter.x, leftEyeCenter.y, eyesOpen);
+          drawCrosshair(ctx, rightEyeCenter.x, rightEyeCenter.y, eyesOpen);
+        }
         
         onEyeStateChange(eyesOpen);
       } else {
@@ -215,11 +296,12 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
     if (isTracking) {
       animationRef.current = requestAnimationFrame(detectEyes);
     }
-  };
+  }, [isTracking, onEyeStateChange, showCrosshair, isModelLoaded]);
 
   // Start/stop detection when tracking state changes
   useEffect(() => {
-    if (isTracking && detectorRef.current) {
+    if (isTracking && detectorRef.current && isModelLoaded) {
+      console.log('Starting eye detection...');
       detectEyes();
     } else if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
@@ -237,7 +319,7 @@ const EyeTracker: React.FC<EyeTrackerProps> = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isTracking, detectEyes]);
+  }, [isTracking, detectEyes, isModelLoaded]);
 
   return null; // This component doesn't render anything
 };
